@@ -10,32 +10,206 @@
         <div class="header">
             <h1>T O D O</h1>
             <h1>logo</h1>
-        </div><br>
+        </div>
         <div class="create-task">
             <div class="task">
-                <h3>task1</h3>
+                <div class="radio"></div>
+                <h3><input placeholder="Create a new todo..." id="input" class="input"/></h3>
             </div>
         </div>
         <br>
-        <div class="task-list">
-            <div class="task">
-                <h3>task1</h3>
-            </div>
-            <div class="task">
-                <h3>task1</h3>
-            </div>
-            <div class="task">
-                <h3>task1</h3>
-                <h3>task1</h3>
-                <h3>task1</h3>
-            </div>
-            <div class="task">
-                <h3>task1</h3>
-            </div>
+        <div class="task-list" id="task-list">
         </div>
         <div class="utility">
-            <div>5 items</div> all active completed
+            <div id="uc-task">0 items left</div> 
+            <div>
+                <span id="displayAll"onclick='display("all")'>All</span> &nbsp;&nbsp;
+                <span id="displayActive" onclick='display("active")'>Active</span> &nbsp;&nbsp;
+                <span id="displayCompleted"onclick='display("completed")'>Completed</span>&nbsp;&nbsp;
+            </div>
+            <div>Clear Completed</div>
         </div>
     </div>
 </body>
+<script>
+
+    window.onload = ()=>{
+        let totalTask=document.getElementsByClassName("task").length-1;
+        //console.log(document.getElementById('uc-task').innerText.split(" "));
+        document.getElementById('uc-task').innerText=totalTask+" items left";
+        
+        //makes footer invisible
+        document.getElementsByClassName("utility")[0].style.visibility="hidden";
+
+        //loading data from local storage
+        loadTaskLS();
+    }
+
+
+    document.getElementById("input").addEventListener("keydown", ( event ) => {
+        if(event.keyCode === 13){
+            addTask(document.getElementById("input").value,false);
+            document.getElementById("input").value="";
+        }
+    });
+
+
+    checkToggle = (event) => {
+        //changing radio css
+        event.target.classList.toggle("gradient");
+        let checkIcon = document.createElement("img");
+        checkIcon.setAttribute("src","./images/icon-check.svg");
+        let taskText= event.target.nextElementSibling;
+        taskText.classList.toggle("checked-task");
+
+        //changing footer data
+        let taskNo=(document.getElementById("uc-task").innerText.split(" ")[0]/1);
+
+        if(taskText.classList.value !=""){
+            if(taskNo-1 >= 0)
+            document.getElementById("uc-task").innerText=(taskNo -1)+ " items left";
+        }
+        else{
+            document.getElementById("uc-task").innerText=(taskNo +1)+ " items left";
+        }
+
+        //changing local storage for element
+        let key=event.target.parentElement.getAttribute('key');
+        if(event.target.classList.length == 2 ){
+            let data={
+                'task':event.target.nextElementSibling.innerText,
+                'isChecked':true,
+            };
+            changeLocalStorage(key,data)
+        }
+        else if (event.target.classList.length == 1 ){
+            let data={
+                'task':event.target.nextElementSibling.innerText,
+                'isChecked':false,
+            }
+            changeLocalStorage(key,data);
+        }
+    }
+
+    addTask = ( text , isChecked) => {
+        
+        //creating and adding new element in task-list
+
+        let newTask = document.createElement("div");
+        let radio = document.createElement("div");
+        let taskValue = document.createElement("h3");
+        let checkIcon = document.createElement("img");
+        let removeDiv = document.createElement("div");
+        let removeIcon = document.createElement("img");
+
+        removeIcon.setAttribute("src","./images/icon-cross.svg");
+        removeDiv.appendChild(removeIcon);
+        removeDiv.setAttribute("class","delete-task");
+        removeDiv.setAttribute("onClick","deleteTask(event)");
+
+        checkIcon.setAttribute("src","./images/icon-check.svg");
+
+        taskValue.innerText=text;
+        radio.setAttribute("class","radio");
+
+        if(isChecked == true){
+            radio.classList.add("gradient");
+        }
+
+        if( document.getElementById("task-list").childElementCount == 0){
+            newTask.setAttribute("class","task first");
+        }
+        else{
+            newTask.setAttribute("class","task");
+        }
+
+        radio.setAttribute("onClick","checkToggle(event)");
+        radio.appendChild(checkIcon);
+
+        newTask.setAttribute("key",(document.getElementById("task-list").childElementCount/1));
+        newTask.appendChild(radio);
+        newTask.appendChild(taskValue);
+        newTask.appendChild(removeDiv);
+
+        document.getElementById("task-list").appendChild(newTask);        
+
+        //changin no of tasks in footer
+        let taskNo=(document.getElementById('uc-task').innerText.split(" ")[0]/1)+1;
+        document.getElementById('uc-task').innerText=taskNo + " items left"
+
+        //checks if footer is hidden then alters its visibility
+        let visibility = document.getElementsByClassName("utility")[0].style.visibility;
+        if(visibility == "hidden"){
+            document.getElementsByClassName("utility")[0].style.visibility="visible";
+        }
+
+        //adding information to local storage
+        let key=(document.getElementById("task-list").childElementCount/1)-1;
+
+        let data={'task':text,'isChecked':isChecked};
+        addLocalStorage(key,data);
+    }
+
+    deleteTask= ( event ) => {
+
+        //editing tasks left in the footer
+        let taskNo=(document.getElementById("uc-task").innerText.split(" ")[0]/1);
+        if(taskNo >0){
+            document.getElementById("uc-task").innerText=(taskNo -1)+ " items left";
+        }
+        //if no tasks are left removes the footer
+        let tasksLeft =document.getElementById('task-list').childElementCount-1;
+
+        if(tasksLeft == 0){
+            document.getElementsByClassName("utility")[0].style.visibility="hidden";
+        }
+
+        //removing the task
+        let endTask=event.target.parentElement.parentElement;
+        endTask.remove();
+    };
+
+    display = (category) => {
+        let allTask = document.getElementById("task-list");
+        
+        if(document.getElementById("displayAll").classList.length==0){
+            let children = allTask.children;
+            for (let i=0 ; i<children.length ; i++){
+                if( children[i].firstChild.classList.length == 2){
+                    children[i].remove();
+                }
+            }            
+        }
+    }
+
+    /*local Storage structure
+
+    key:'number',task:'{task:'string',isChecked:'boolean'}'
+
+    */
+
+
+    loadTaskLS = () =>{
+        let ls=window.localStorage;
+        for(i=0;i<ls.length;i++){
+            let task=JSON.parse(ls.getItem(i))['task'];
+            let isChecked=JSON.parse(ls.getItem(i))['isChecked'];
+            addTask(task,isChecked);
+        }
+    }
+
+    addLocalStorage = (key,data) => {
+        data=JSON.stringify(data);
+        window.localStorage.setItem(key,data);
+    };
+
+    changeLocalStorage = (key,data) =>{
+        let ls=window.localStorage;
+        ls.removeItem(key);
+        data=JSON.stringify(data);
+        ls.setItem(key,data);
+        console.log(window.localStorage);
+    };
+
+</script>
 </html>
