@@ -47,7 +47,7 @@ window.onload = () => {
 
 document.getElementById("input").addEventListener("keydown", (event) => {
     if (event.keyCode === 13) {
-        if(document.getElementById("input").value!=null){
+        if(document.getElementById("input").value!=""){
             addTask(document.getElementById("input").value, false);
             document.getElementById("input").value = "";
         }
