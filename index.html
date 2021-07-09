@@ -23,193 +23,263 @@
         <div class="utility">
             <div id="uc-task">0 items left</div> 
             <div>
-                <span id="displayAll"onclick='display("all")'>All</span> &nbsp;&nbsp;
+                <span id="displayAll" onclick='console.log("displayAll")'>All</span> &nbsp;&nbsp;
                 <span id="displayActive" onclick='display("active")'>Active</span> &nbsp;&nbsp;
-                <span id="displayCompleted"onclick='display("completed")'>Completed</span>&nbsp;&nbsp;
+                <span id="displayCompleted" onclick='display("completed")'>Completed</span>&nbsp;&nbsp;
             </div>
             <div>Clear Completed</div>
         </div>
     </div>
 </body>
 <script>
+let allTask=[];
+window.onload = () => {
+    let totalTask = document.getElementsByClassName("task").length - 1;
+    //console.log(document.getElementById('uc-task').innerText.split(" "));
+    document.getElementById("uc-task").innerText = totalTask + " items left";
 
-    window.onload = ()=>{
-        let totalTask=document.getElementsByClassName("task").length-1;
-        //console.log(document.getElementById('uc-task').innerText.split(" "));
-        document.getElementById('uc-task').innerText=totalTask+" items left";
-        
-        //makes footer invisible
-        document.getElementsByClassName("utility")[0].style.visibility="hidden";
+    //makes footer invisible
+    document.getElementsByClassName("utility")[0].style.visibility = "hidden";
 
-        //loading data from local storage
-        loadTaskLS();
+    //loading data from local storage
+    loadTaskLS();
+};
+
+document.getElementById("input").addEventListener("keydown", (event) => {
+    if (event.keyCode === 13) {
+        addTask(document.getElementById("input").value, false);
+        document.getElementById("input").value = "";
+    }
+});
+
+checkToggle = (event) => {
+    //changing radio css
+    event.target.classList.toggle("gradient");
+    let checkIcon = document.createElement("img");
+    checkIcon.setAttribute("src", "./images/icon-check.svg");
+    let taskText = event.target.nextElementSibling;
+    taskText.classList.toggle("checked-task");
+    
+    //changeing alltask data and editing local Storage
+
+    let isCompleted;
+
+    if (event.target.classList.length == 2) {
+        isCompleted= true;
+    } 
+    else if (event.target.classList.length == 1) {
+        isCompleted=false;
     }
 
+    let key=event.target.parentElement.getAttribute("key");
 
-    document.getElementById("input").addEventListener("keydown", ( event ) => {
-        if(event.keyCode === 13){
-            addTask(document.getElementById("input").value,false);
-            document.getElementById("input").value="";
-        }
-    });
+    let leftTask=0;
 
+    for(let i=0;i<allTask.length;i++){
 
-    checkToggle = (event) => {
-        //changing radio css
-        event.target.classList.toggle("gradient");
-        let checkIcon = document.createElement("img");
-        checkIcon.setAttribute("src","./images/icon-check.svg");
-        let taskText= event.target.nextElementSibling;
-        taskText.classList.toggle("checked-task");
-
-        //changing footer data
-        let taskNo=(document.getElementById("uc-task").innerText.split(" ")[0]/1);
-
-        if(taskText.classList.value !=""){
-            if(taskNo-1 >= 0)
-            document.getElementById("uc-task").innerText=(taskNo -1)+ " items left";
-        }
-        else{
-            document.getElementById("uc-task").innerText=(taskNo +1)+ " items left";
+        if( allTask[i]["key"] == key ){
+            allTask[i]["isChecked"]=isCompleted;
         }
 
-        //changing local storage for element
-        let key=event.target.parentElement.getAttribute('key');
-        if(event.target.classList.length == 2 ){
-            let data={
-                'task':event.target.nextElementSibling.innerText,
-                'isChecked':true,
-            };
-            changeLocalStorage(key,data)
+        if( allTask[i]["isChecked"] == false){
+            leftTask++;
+            console.log(allTask["isChecked"," hello"]);
         }
-        else if (event.target.classList.length == 1 ){
-            let data={
-                'task':event.target.nextElementSibling.innerText,
-                'isChecked':false,
+    }
+
+    console.log(allTask);
+    window.localStorage.clear();
+    window.localStorage.setItem("data",JSON.stringify(allTask));
+    document.getElementById("uc-task").innerText = leftTask + " items left";
+};
+
+addTask = (text, isChecked) => {
+    //creating and adding new element in task-list
+
+    let newTask = document.createElement("div");
+    let radio = document.createElement("div");
+    let taskValue = document.createElement("h3");
+    let checkIcon = document.createElement("img");
+    let removeDiv = document.createElement("div");
+    let removeIcon = document.createElement("img");
+
+    removeIcon.setAttribute("src", "./images/icon-cross.svg");
+    removeDiv.appendChild(removeIcon);
+    removeDiv.setAttribute("class", "delete-task");
+    removeDiv.setAttribute("onClick", "deleteTask(event)");
+
+    checkIcon.setAttribute("src", "./images/icon-check.svg");
+
+    taskValue.innerText = text;
+    radio.setAttribute("class", "radio");
+
+    if (document.getElementById("task-list").childElementCount == 0) {
+        newTask.setAttribute("class", "task first");
+    } else {
+        newTask.setAttribute("class", "task");
+    }
+
+    radio.setAttribute("onClick", "checkToggle(event)");
+    radio.appendChild(checkIcon);
+
+    newTask.setAttribute(
+        "key",
+        document.getElementById("task-list").childElementCount / 1
+    );
+    newTask.appendChild(radio);
+    newTask.appendChild(taskValue);
+    newTask.appendChild(removeDiv);
+
+    document.getElementById("task-list").appendChild(newTask);
+
+    if (isChecked == true) {
+        radio.click();
+    }
+
+    //changin no of tasks in footer
+    let taskNo = document.getElementById("uc-task").innerText.split(" ")[0] / 1 + 1;
+    document.getElementById("uc-task").innerText = taskNo + " items left";
+
+    //checks if footer is hidden then alters its visibility
+    let visibility =
+        document.getElementsByClassName("utility")[0].style.visibility;
+    if (visibility == "hidden") {
+        document.getElementsByClassName("utility")[0].style.visibility =
+            "visible";
+    }
+
+    //changing all task data and editing local storage
+    allTask.push({
+        "key":document.getElementById("task-list").childElementCount / 1-1,
+        "text":text,
+        "isChecked":isChecked});
+    console.log(JSON.stringify(allTask));
+    window.localStorage.clear();
+    window.localStorage.setItem("data",JSON.stringify(allTask));
+    
+};
+
+deleteTask = (event) => {
+    //editing tasks left in the footer
+    let taskNo = document.getElementById("uc-task").innerText.split(" ")[0] / 1;
+    let grad = event.target.parentElement.parentElement.firstChild.classList[1];
+    if (taskNo > 0 && grad != "gradient") {
+        document.getElementById("uc-task").innerText =
+            taskNo - 1 + " items left";
+        console.log();
+    }
+
+    //editing key of each element
+    let tasks = document.getElementById("task-list").children;
+    let startTask =
+        event.target.parentElement.parentElement.getAttribute("key");
+
+    for (let i = startTask; i < tasks.length; i++) {
+        tasks[i].setAttribute("key", tasks[i].getAttribute("key") / 1 - 1);
+    }
+
+    //if no tasks are left removes the footer
+    let tasksLeft = document.getElementById("task-list").childElementCount - 1;
+
+    if (tasksLeft == 0) {
+        document.getElementsByClassName("utility")[0].style.visibility =
+            "hidden";
+    }
+
+    let endTask = event.target.parentElement.parentElement;
+    //removing the task
+    endTask.remove();
+
+    //editing data of all task and then editing local storage
+    allTask=[];
+    let newTasks=document.getElementById("task-list").children;
+
+    for(let i=0;i<newTasks.length;i++){
+
+        let taskKey=newTasks[i].getAttribute("key");
+        let text=newTasks[i].firstChild.nextElementSibling.innerText;
+        let checked = false;
+        if(newTasks[i].firstChild.classList.length == 2 ){
+            checked = true;
+        }
+
+        let newData={
+            "key" : taskKey,
+            "text" : text,
+            "isChecked" : checked
+        };
+        allTask.push(newData);
+
+
+    }
+
+    let leftTask=0;
+
+    for(let i=0;i<allTask.length;i++){
+        if(allTask[i]["isChecked"]==false){
+            leftTask++;
+        }
+    }
+
+    document.getElementById("uc-task").innerText = leftTask + " items left";
+
+    console.log(JSON.stringify(allTask));
+    window.localStorage.clear();
+    window.localStorage.setItem("data",JSON.stringify(allTask));
+};
+
+display = (category) => {
+    let allTask = document.getElementById("task-list");
+    console.log(0);
+
+    if (
+        (category =
+            "all" &&
+            document.getElementById("displayAll").classList.length == 0)
+    ) {
+        let children = allTask.children;
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].firstChild.classList.length == 2) {
+                children[i].remove();
             }
-            changeLocalStorage(key,data);
+        }
+
+        loadTaskLS();
+    } else if ((category = "active")) {
+        let children = allTask.children;
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].firstChild.classList.length == 2) {
+                children[i].remove();
+            }
         }
     }
+};
 
-    addTask = ( text , isChecked) => {
-        
-        //creating and adding new element in task-list
-
-        let newTask = document.createElement("div");
-        let radio = document.createElement("div");
-        let taskValue = document.createElement("h3");
-        let checkIcon = document.createElement("img");
-        let removeDiv = document.createElement("div");
-        let removeIcon = document.createElement("img");
-
-        removeIcon.setAttribute("src","./images/icon-cross.svg");
-        removeDiv.appendChild(removeIcon);
-        removeDiv.setAttribute("class","delete-task");
-        removeDiv.setAttribute("onClick","deleteTask(event)");
-
-        checkIcon.setAttribute("src","./images/icon-check.svg");
-
-        taskValue.innerText=text;
-        radio.setAttribute("class","radio");
-
-        if(isChecked == true){
-            radio.classList.add("gradient");
-        }
-
-        if( document.getElementById("task-list").childElementCount == 0){
-            newTask.setAttribute("class","task first");
-        }
-        else{
-            newTask.setAttribute("class","task");
-        }
-
-        radio.setAttribute("onClick","checkToggle(event)");
-        radio.appendChild(checkIcon);
-
-        newTask.setAttribute("key",(document.getElementById("task-list").childElementCount/1));
-        newTask.appendChild(radio);
-        newTask.appendChild(taskValue);
-        newTask.appendChild(removeDiv);
-
-        document.getElementById("task-list").appendChild(newTask);        
-
-        //changin no of tasks in footer
-        let taskNo=(document.getElementById('uc-task').innerText.split(" ")[0]/1)+1;
-        document.getElementById('uc-task').innerText=taskNo + " items left"
-
-        //checks if footer is hidden then alters its visibility
-        let visibility = document.getElementsByClassName("utility")[0].style.visibility;
-        if(visibility == "hidden"){
-            document.getElementsByClassName("utility")[0].style.visibility="visible";
-        }
-
-        //adding information to local storage
-        let key=(document.getElementById("task-list").childElementCount/1)-1;
-
-        let data={'task':text,'isChecked':isChecked};
-        addLocalStorage(key,data);
-    }
-
-    deleteTask= ( event ) => {
-
-        //editing tasks left in the footer
-        let taskNo=(document.getElementById("uc-task").innerText.split(" ")[0]/1);
-        if(taskNo >0){
-            document.getElementById("uc-task").innerText=(taskNo -1)+ " items left";
-        }
-        //if no tasks are left removes the footer
-        let tasksLeft =document.getElementById('task-list').childElementCount-1;
-
-        if(tasksLeft == 0){
-            document.getElementsByClassName("utility")[0].style.visibility="hidden";
-        }
-
-        //removing the task
-        let endTask=event.target.parentElement.parentElement;
-        endTask.remove();
-    };
-
-    display = (category) => {
-        let allTask = document.getElementById("task-list");
-        
-        if(document.getElementById("displayAll").classList.length==0){
-            let children = allTask.children;
-            for (let i=0 ; i<children.length ; i++){
-                if( children[i].firstChild.classList.length == 2){
-                    children[i].remove();
-                }
-            }            
-        }
-    }
-
-    /*local Storage structure
+/*local Storage structure
 
     key:'number',task:'{task:'string',isChecked:'boolean'}'
 
     */
 
+loadTaskLS = () => {
+    let ls = window.localStorage;
+    let oldData=JSON.parse(ls.getItem("data"));
+    console.log(oldData);
 
-    loadTaskLS = () =>{
-        let ls=window.localStorage;
-        for(i=0;i<ls.length;i++){
-            let task=JSON.parse(ls.getItem(i))['task'];
-            let isChecked=JSON.parse(ls.getItem(i))['isChecked'];
-            addTask(task,isChecked);
+    let leftTask=0;
+
+    for(let i=0;i<oldData.length;i++){
+        let text=oldData[i]["text"];
+        let isChecked=oldData[i]["isChecked"];
+        addTask(text,isChecked)
+
+        if(oldData[i]["isChecked"]==false){
+            leftTask++;
         }
     }
 
-    addLocalStorage = (key,data) => {
-        data=JSON.stringify(data);
-        window.localStorage.setItem(key,data);
-    };
-
-    changeLocalStorage = (key,data) =>{
-        let ls=window.localStorage;
-        ls.removeItem(key);
-        data=JSON.stringify(data);
-        ls.setItem(key,data);
-        console.log(window.localStorage);
-    };
+    document.getElementById("uc-task").innerText = leftTask + " items left";
+};
 
 </script>
 </html>
